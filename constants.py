@@ -35,7 +35,7 @@ BRIGHTNESS_COMMANDS = [
 ZEROES = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'  # noqa
 
 # Yes, I hate this too. But I don't have a good way of generating these, as
-# it's not as straightforwards as adding 3 every time; there are strange
+# it's not as straightforwards as adding §3 every time; there are strange
 # gaps of numbers every now and again.
 KEYS = [
     3,

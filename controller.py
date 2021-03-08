@@ -5,15 +5,28 @@ from constants import *
 
 class Keyboard(object):
     def __init__(self):
-        device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
-        if device.is_kernel_driver_active(INTERFACE):
-            print('Detaching kernel driver')
-            device.detach_kernel_driver(INTERFACE)
+        self.device: usb.core.Device = usb.core.find(
+            idVendor=VENDOR_ID, idProduct=PRODUCT_ID
+        )
 
-        configuration = device.get_active_configuration()
+    def __enter__(self):
+        if self.device.is_kernel_driver_active(INTERFACE):
+            print('Detaching kernel driver')
+            self.device.detach_kernel_driver(INTERFACE)
+
+        configuration = self.device.get_active_configuration()
         interface = configuration[(INTERFACE, SETTING)]
         self._in = interface[IN_ENDPOINT_NUM]
         self._out = interface[OUT_ENDPOINT_NUM]
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            self.device.reset()
+        except Exception:
+            print("Couldn't reset USB device.")
+            pass
+        return any([exc_type, exc_val, exc_tb])
 
     def write(self, data):
         self._out.write(data + ZEROES)
@@ -29,7 +42,7 @@ class Keyboard(object):
         actual_key = KEYS[key]
         section = get_section(key)
         second_bit_bytes = b'\x00'
-        key_hex_bytes = to_bytes(hex(actual_key)[2: 4])
+        key_hex_bytes = to_bytes(hex(actual_key)[2:])
         section_bytes = to_bytes(str(section))
         r_bytes = to_bytes(r)
         g_bytes = to_bytes(g)
@@ -78,32 +91,32 @@ def read_rgb():
 
 if __name__ == '__main__':
     command = ''
-    keyboard = Keyboard()
-    while command != 'stop':
-        command = input('Enter a mode: ')
-        if command == 'stop':
-            break
-        elif command == 'key':
-            key = input('Enter a key: ')
-            rgb = read_rgb()
-            keyboard.set_key_color(int(key), rgb[0], rgb[1], rgb[2])
-            continue
-        elif command == 'colorall':
-            rgb = read_rgb()
-            keyboard.color_all(rgb[0], rgb[1], rgb[2])
-            continue
-        elif command == 'brightness':
-            level = int(input('Enter a brightness level(0-4): '))
-            command = BRIGHTNESS_COMMANDS[level]
-            keyboard.write(command)
-            continue
-        elif command == 'raw':
-            raw = input('Enter raw data: ')
-            keyboard.write(to_bytes(raw))
-            continue
+    with Keyboard() as keyboard:
+        while command != 'stop':
+            command = input('Enter a mode: ')
+            if command == 'stop':
+                break
+            elif command == 'key':
+                key = input('Enter a key: ')
+                rgb = read_rgb()
+                keyboard.set_key_color(int(key), rgb[0], rgb[1], rgb[2])
+                continue
+            elif command == 'colorall':
+                rgb = read_rgb()
+                keyboard.color_all(rgb[0], rgb[1], rgb[2])
+                continue
+            elif command == 'brightness':
+                level = int(input('Enter a brightness level(0-4): '))
+                command = BRIGHTNESS_COMMANDS[level]
+                keyboard.write(command)
+                continue
+            elif command == 'raw':
+                raw = input('Enter raw data: ')
+                keyboard.write(to_bytes(raw))
+                continue
 
-        hex_value = MODE_COMMANDS.get(command, '')
-        if hex_value == '':
-            print('Invalid input, try again.')
-        else:
-            keyboard.write(hex_value)
+            hex_value = MODE_COMMANDS.get(command, '')
+            if hex_value == '':
+                print('Invalid input, try again.')
+            else:
+                keyboard.write(hex_value)
