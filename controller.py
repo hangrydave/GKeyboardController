@@ -48,8 +48,21 @@ class Keyboard(object):
         g_bytes = to_bytes(g)
         b_bytes = to_bytes(b)
 
-        data = b'\x04' + second_bit_bytes + b'\x01\x11\x03' + key_hex_bytes + \
-               section_bytes + b'\x00' + r_bytes + g_bytes + b_bytes
+        data = b''.join(
+            [
+                b'\x04',
+                second_bit_bytes,
+                b'\x01',
+                Commands.WRITE_CUSTOM_COLOR_DATA,
+                b'\x03',
+                key_hex_bytes,
+                section_bytes,
+                b'\x00',
+                r_bytes,
+                g_bytes,
+                b_bytes,
+            ]
+        )
         return self.write(data)
 
     def color_all(self, r, g, b):

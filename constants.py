@@ -10,6 +10,15 @@ TOTAL_KEY_COUNT = 104
 SECTION_0_KEY_COUNT = 77
 SECTION_1_KEY_COUNT = 27
 
+
+class Commands:
+    BEGIN = b'\x01'
+    END = b'\x02'
+    SET_PARAMETER = b'\x06'
+    READ_CUSTOM_COLOR_DATA = b'\x10'
+    WRITE_CUSTOM_COLOR_DATA = b'\x11'
+
+
 # Commands for each of the modes defined in the official software.
 MODE_COMMANDS = {
     'wave1':            b'\x04\x08\x00\x06\x01\x00\x00\x00\x01',
