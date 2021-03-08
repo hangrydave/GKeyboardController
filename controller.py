@@ -91,7 +91,7 @@ def read_rgb():
     return input('Enter R: '), input('Enter G: '), input('Enter B: ')
 
 
-if __name__ == '__main__':
+def main():
     command = ''
     with Keyboard() as keyboard:
         while command != 'stop':
@@ -122,3 +122,7 @@ if __name__ == '__main__':
                 print('Invalid input, try again.')
             else:
                 keyboard.write(hex_value)
+
+
+if __name__ == '__main__':
+    main()
