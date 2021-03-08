@@ -12,34 +12,41 @@ interface = configuration[(INTERFACE, SETTING)]
 in_endpoint = interface[IN_ENDPOINT_NUM]
 out_endpoint = interface[OUT_ENDPOINT_NUM]
 
-# These commands are sent along with the actual useful command from the official software for every command.
-# These seem to have no visible effect on the keyboard, so they're unused until something breaks.
+# These commands are sent along with the actual useful command from the
+# official software for every command. These seem to have no visible effect
+# on the keyboard, so they're unused until something breaks.
 # The second command would be the command with useful data.
 # FIRST_COMMAND = b'\x04\x01\x00\x01\x00\x00\x00\x00\x00' + ZEROES
 # THIRD_COMMAND = b'\x04\x0b\x00\x06\x01\x04\x00\x00\x00' + ZEROES
 # FOURTH_COMMAND = b'\x04\x02\x00\x02\x00\x00\x00\x00\x00' + ZEROES
+
 
 def write(data):
     out_endpoint.write(data + ZEROES)
     result = in_endpoint.read(64)
     return result
 
-# Calculate the value of the second bit.
+
 def get_second_bit(key, r, g, b):
+    """Calculate the value of the second bit."""
     # In case it's not clear, the second bit is the last two characters from:
     # hex(23 + (r + g + b) + key numeric value(0,3,6,...))
     sum_string = hex(23 + ((int(key)) * 3) + (r + g + b))
-    second_bit = sum_string[len(sum_string) - 2 : len(sum_string)]
+    second_bit = sum_string[len(sum_string) - 2: len(sum_string)]
     return second_bit
+
 
 def to_bytes(arg):
     return binascii.unhexlify(arg.zfill(2))
 
+
 def get_section(key_num):
     return 1 if key_num > SECTION_0_KEY_COUNT - 1 else 0
 
-def set_key_color(key, r, g, b, second_bit=b'\x00'):
-    # Turns out that the second bit actually doesn't have an impact on things. I'll leave it at 00 until something breaks.
+
+def set_key_color(key, r, g, b):
+    # Turns out that the second bit actually doesn't have an impact on things.
+    # I'll leave it at 00 until something breaks.
     # if second_bit == None:
     #    second_bit = get_second_bit(key, int(r, 16), int(g, 16), int(b, 16))
     # second_bit_bytes = to_bytes(second_bit)
@@ -48,30 +55,35 @@ def set_key_color(key, r, g, b, second_bit=b'\x00'):
     section = get_section(key)
 
     second_bit_bytes = b'\x00'
-    key_hex_bytes = to_bytes(hex(actual_key)[2 : 4])
+    key_hex_bytes = to_bytes(hex(actual_key)[2: 4])
     section_bytes = to_bytes(str(section))
     r_bytes = to_bytes(r)
     g_bytes = to_bytes(g)
     b_bytes = to_bytes(b)
-    
-    data = b'\x04' + second_bit_bytes + b'\x01\x11\x03' + key_hex_bytes + section_bytes + b'\x00' + r_bytes + g_bytes + b_bytes
+
+    data = b'\x04' + second_bit_bytes + b'\x01\x11\x03' + key_hex_bytes + \
+           section_bytes + b'\x00' + r_bytes + g_bytes + b_bytes
     return write(data)
+
 
 def read_rgb():
     r = input('Enter R: ')
     g = input('Enter G: ')
     b = input('Enter B: ')
-    return (r, g, b)
+    return r, g, b
+
 
 def color_all(r, g, b):
     for i in range(0, TOTAL_KEY_COUNT):
         set_key_color(i, r, g, b)
 
+
 if __name__ == '__main__':
     command = ''
     while command != 'stop':
         command = input('Enter a mode: ')
-        if command == 'stop': break
+        if command == 'stop':
+            break
         elif command == 'key':
             key = input('Enter a key: ')
             rgb = read_rgb()
@@ -96,4 +108,3 @@ if __name__ == '__main__':
             print('Invalid input, try again.')
         else:
             write(hex_value)
-
