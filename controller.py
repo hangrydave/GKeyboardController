@@ -69,14 +69,6 @@ class Keyboard(object):
         for i in range(0, TOTAL_KEY_COUNT):
             self.set_key_color(i, r, g, b)
 
-# These commands are sent along with the actual useful command from the
-# official software for every command. These seem to have no visible effect
-# on the keyboard, so they're unused until something breaks.
-# The second command would be the command with useful data.
-# FIRST_COMMAND = b'\x04\x01\x00\x01\x00\x00\x00\x00\x00' + ZEROES
-# THIRD_COMMAND = b'\x04\x0b\x00\x06\x01\x04\x00\x00\x00' + ZEROES
-# FOURTH_COMMAND = b'\x04\x02\x00\x02\x00\x00\x00\x00\x00' + ZEROES
-
 
 def get_second_bit(key, r, g, b):
     """Calculate the value of the second bit."""

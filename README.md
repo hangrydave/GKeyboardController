@@ -24,3 +24,18 @@ This corresponds to the information given by OpenRGB as well, see https://github
 
 As mentioned, OpenRGB is an excellent source of information as well as more complete.
 see https://github.com/CalcProgrammer1/OpenRGB/blob/843dacb43e6db7efc731082681358d64c039c6f4/Controllers/RedragonController/RedragonK556Controller.h for GMMK compatible details.
+
+## Reverse engineering notes
+moved from code:
+```
+These commands are sent along with the actual useful command from the
+official software for every command. These seem to have no visible effect
+on the keyboard, so they're unused until something breaks.
+The second command would be the command with useful data.
+FIRST_COMMAND = b'\x04\x01\x00\x01\x00\x00\x00\x00\x00' + ZEROES
+THIRD_COMMAND = b'\x04\x0b\x00\x06\x01\x04\x00\x00\x00' + ZEROES
+FOURTH_COMMAND = b'\x04\x02\x00\x02\x00\x00\x00\x00\x00' + ZEROES
+```
+"FIRST" is probably equal to "Keyboard Begin" from OpenRGB code base and 
+"FOURTH" is "Keyboard End", looks as if you can send a buffer of commands before
+executing. See https://github.com/CalcProgrammer1/OpenRGB/blob/dba814215d88d43b8d425b2a1c345e9b2a46a8d6/Controllers/RedragonController/RedragonK556Controller.cpp#L118
