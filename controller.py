@@ -1,6 +1,4 @@
-import sys
 import usb.core
-import time
 import binascii
 from constants import *
 
