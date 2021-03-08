@@ -88,10 +88,7 @@ def get_section(key_num):
 
 
 def read_rgb():
-    r = input('Enter R: ')
-    g = input('Enter G: ')
-    b = input('Enter B: ')
-    return r, g, b
+    return input('Enter R: '), input('Enter G: '), input('Enter B: ')
 
 
 if __name__ == '__main__':
@@ -103,12 +100,12 @@ if __name__ == '__main__':
                 break
             elif command == 'key':
                 key = input('Enter a key: ')
-                rgb = read_rgb()
-                keyboard.set_key_color(int(key), rgb[0], rgb[1], rgb[2])
+                r, g, b = read_rgb()
+                keyboard.set_key_color(int(key), r, g, b)
                 continue
             elif command == 'colorall':
-                rgb = read_rgb()
-                keyboard.color_all(rgb[0], rgb[1], rgb[2])
+                r, g, b = read_rgb()
+                keyboard.color_all(r, g, b)
                 continue
             elif command == 'brightness':
                 level = int(input('Enter a brightness level(0-4): '))
