@@ -2,15 +2,46 @@ import usb.core
 import binascii
 from constants import *
 
-device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
-if device.is_kernel_driver_active(INTERFACE):
-    print("Detaching kernel driver")
-    device.detach_kernel_driver(INTERFACE)
 
-configuration = device.get_active_configuration()
-interface = configuration[(INTERFACE, SETTING)]
-in_endpoint = interface[IN_ENDPOINT_NUM]
-out_endpoint = interface[OUT_ENDPOINT_NUM]
+class Keyboard(object):
+    def __init__(self):
+        device = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
+        if device.is_kernel_driver_active(INTERFACE):
+            print('Detaching kernel driver')
+            device.detach_kernel_driver(INTERFACE)
+
+        configuration = device.get_active_configuration()
+        interface = configuration[(INTERFACE, SETTING)]
+        self._in = interface[IN_ENDPOINT_NUM]
+        self._out = interface[OUT_ENDPOINT_NUM]
+
+    def write(self, data):
+        self._out.write(data + ZEROES)
+        result = self._in.read(64)
+        return result
+
+    def set_key_color(self, key, r, g, b):
+        # Turns out that the second bit actually doesn't have an impact on
+        # things. I'll leave it at 00 until something breaks.
+        # if second_bit == None:
+        #    second_bit = get_second_bit(key, int(r, 16), int(g, 16), int(b, 16))  # noqa
+        # second_bit_bytes = to_bytes(second_bit)
+        actual_key = KEYS[key]
+        section = get_section(key)
+        second_bit_bytes = b'\x00'
+        key_hex_bytes = to_bytes(hex(actual_key)[2: 4])
+        section_bytes = to_bytes(str(section))
+        r_bytes = to_bytes(r)
+        g_bytes = to_bytes(g)
+        b_bytes = to_bytes(b)
+
+        data = b'\x04' + second_bit_bytes + b'\x01\x11\x03' + key_hex_bytes + \
+               section_bytes + b'\x00' + r_bytes + g_bytes + b_bytes
+        return self.write(data)
+
+    def color_all(self, r, g, b):
+        for i in range(0, TOTAL_KEY_COUNT):
+            self.set_key_color(i, r, g, b)
 
 # These commands are sent along with the actual useful command from the
 # official software for every command. These seem to have no visible effect
@@ -19,12 +50,6 @@ out_endpoint = interface[OUT_ENDPOINT_NUM]
 # FIRST_COMMAND = b'\x04\x01\x00\x01\x00\x00\x00\x00\x00' + ZEROES
 # THIRD_COMMAND = b'\x04\x0b\x00\x06\x01\x04\x00\x00\x00' + ZEROES
 # FOURTH_COMMAND = b'\x04\x02\x00\x02\x00\x00\x00\x00\x00' + ZEROES
-
-
-def write(data):
-    out_endpoint.write(data + ZEROES)
-    result = in_endpoint.read(64)
-    return result
 
 
 def get_second_bit(key, r, g, b):
@@ -44,28 +69,6 @@ def get_section(key_num):
     return 1 if key_num > SECTION_0_KEY_COUNT - 1 else 0
 
 
-def set_key_color(key, r, g, b):
-    # Turns out that the second bit actually doesn't have an impact on things.
-    # I'll leave it at 00 until something breaks.
-    # if second_bit == None:
-    #    second_bit = get_second_bit(key, int(r, 16), int(g, 16), int(b, 16))
-    # second_bit_bytes = to_bytes(second_bit)
-
-    actual_key = KEYS[key]
-    section = get_section(key)
-
-    second_bit_bytes = b'\x00'
-    key_hex_bytes = to_bytes(hex(actual_key)[2: 4])
-    section_bytes = to_bytes(str(section))
-    r_bytes = to_bytes(r)
-    g_bytes = to_bytes(g)
-    b_bytes = to_bytes(b)
-
-    data = b'\x04' + second_bit_bytes + b'\x01\x11\x03' + key_hex_bytes + \
-           section_bytes + b'\x00' + r_bytes + g_bytes + b_bytes
-    return write(data)
-
-
 def read_rgb():
     r = input('Enter R: ')
     g = input('Enter G: ')
@@ -73,13 +76,9 @@ def read_rgb():
     return r, g, b
 
 
-def color_all(r, g, b):
-    for i in range(0, TOTAL_KEY_COUNT):
-        set_key_color(i, r, g, b)
-
-
 if __name__ == '__main__':
     command = ''
+    keyboard = Keyboard()
     while command != 'stop':
         command = input('Enter a mode: ')
         if command == 'stop':
@@ -87,24 +86,24 @@ if __name__ == '__main__':
         elif command == 'key':
             key = input('Enter a key: ')
             rgb = read_rgb()
-            set_key_color(int(key), rgb[0], rgb[1], rgb[2])
+            keyboard.set_key_color(int(key), rgb[0], rgb[1], rgb[2])
             continue
         elif command == 'colorall':
             rgb = read_rgb()
-            color_all(rgb[0], rgb[1], rgb[2])
+            keyboard.color_all(rgb[0], rgb[1], rgb[2])
             continue
         elif command == 'brightness':
             level = int(input('Enter a brightness level(0-4): '))
             command = BRIGHTNESS_COMMANDS[level]
-            write(command)
+            keyboard.write(command)
             continue
         elif command == 'raw':
             raw = input('Enter raw data: ')
-            write(to_bytes(raw))
+            keyboard.write(to_bytes(raw))
             continue
 
         hex_value = MODE_COMMANDS.get(command, '')
         if hex_value == '':
             print('Invalid input, try again.')
         else:
-            write(hex_value)
+            keyboard.write(hex_value)
